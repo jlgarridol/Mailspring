@@ -120,8 +120,9 @@
   }
 
   .container-general {
-    width: 80%;
+    width: 100%;
     min-width: 430px;
+    max-width: 800px;
     margin: 0 auto;
 
     .local-data {
@@ -191,9 +192,17 @@
     }
   }
 
+  .container-general,
   .container-keymaps {
-    width: 40%;
-    min-width: 460px;
+    .two-columns-flexbox {
+      display: flex;
+    }
+  }
+
+  .container-keymaps {
+    width: 100%;
+    max-width: 800px;
+    min-width: 430px;
     margin: 0 auto;
 
     .col-left {
@@ -218,7 +227,7 @@
       padding: 3px 0;
       color: @text-color-very-subtle;
       .values {
-        font-family: monospace;
+        font-family: @font-family-monospace;
         font-weight: 600;
         color: @text-color;
         display: inline-block;
@@ -297,8 +306,14 @@ body.platform-linux {
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 680px) {
   .preferences-wrap {
+    .container-keymaps,
+    .container-general {
+      .two-columns-flexbox {
+        flex-direction: column;
+      }
+    }
     .container-preference-tabs {
       .preferences-tabs .item img.tab-icon {
         margin-bottom: 10px;

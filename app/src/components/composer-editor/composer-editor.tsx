@@ -1,8 +1,10 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import * as Immutable from 'immutable';
 import { Editor, Value, Operation, Range } from 'slate';
 import { Editor as SlateEditorComponent, EditorProps } from 'slate-react';
 import { clipboard as ElectronClipboard } from 'electron';
+import { InlineStyleTransformer } from 'mailspring-exports';
 import path from 'path';
 import fs from 'fs';
 
@@ -11,7 +13,6 @@ import ComposerEditorToolbar from './composer-editor-toolbar';
 import { schema, plugins, convertFromHTML, convertToHTML, convertToPlainText } from './conversion';
 import { lastUnquotedNode, removeQuotedText } from './base-block-plugins';
 import { changes as InlineAttachmentChanges } from './inline-attachment-plugins';
-import ReactDOM from 'react-dom';
 
 const AEditor = (SlateEditorComponent as any) as React.ComponentType<
   EditorProps & { ref: any; propsForPlugins: any }
@@ -169,51 +170,22 @@ export class ComposerEditor extends React.Component<ComposerEditorProps> {
 
     if (onFileReceived && event.clipboardData.items.length > 0) {
       event.preventDefault();
-      const item = event.clipboardData.items[0];
-
-      // If the pasteboard has a file on it, stream it to a temporary
-      // file and fire our `onFilePaste` event.
-      if (item.kind === 'file') {
-        const temp = require('temp');
-        const blob = item.getAsFile();
-        const ext =
-          {
-            'image/png': '.png',
-            'image/jpg': '.jpg',
-            'image/tiff': '.tiff',
-          }[item.type] || '';
-
-        const reader = new FileReader();
-        reader.addEventListener('loadend', () => {
-          const buffer = Buffer.from(new Uint8Array(reader.result as any));
-          const tmpFolder = temp.path('-mailspring-attachment');
-          const tmpPath = path.join(tmpFolder, `Pasted File${ext}`);
-          fs.mkdir(tmpFolder, () => {
-            fs.writeFile(tmpPath, buffer, () => {
-              onFileReceived(tmpPath);
-            });
-          });
-        });
-        reader.readAsArrayBuffer(blob);
+      if (handleFilePasted(event, onFileReceived)) {
         return;
-      } else {
-        const macCopiedFile = decodeURI(
-          ElectronClipboard.read('public.file-url').replace('file://', '')
-        );
-        const winCopiedFile = ElectronClipboard.read('FileNameW').replace(
-          new RegExp(String.fromCharCode(0), 'g'),
-          ''
-        );
-        if (macCopiedFile.length || winCopiedFile.length) {
-          onFileReceived(macCopiedFile || winCopiedFile);
-          return;
-        }
       }
     }
 
-    // handle text/html paste
-    const html = event.clipboardData.getData('text/html');
+    let html = event.clipboardData.getData('text/html');
+
     if (html) {
+      // Unfortuantely, pasting HTML requires an synchronous hop through our main process style
+      // transfomer. This ensures that we inline styles and preserve as much as possible.
+      // (eg: pasting tables from Excel).
+      try {
+        html = InlineStyleTransformer.runSync(html);
+      } catch (err) {
+        //no-op
+      }
       const value = convertFromHTML(html);
       if (value && value.document) {
         editor.insertFragment(value.document);
@@ -297,4 +269,52 @@ export class ComposerEditor extends React.Component<ComposerEditorProps> {
       </KeyCommandsRegion>
     );
   }
+}
+
+// Helpers
+
+export function handleFilePasted(event: ClipboardEvent, onFileReceived: (path: string) => void) {
+  if (event.clipboardData.items.length === 0) {
+    return false;
+  }
+  const item = event.clipboardData.items[0];
+
+  // If the pasteboard has a file on it, stream it to a temporary
+  // file and fire our `onFilePaste` event.
+  if (item.kind === 'file') {
+    const temp = require('temp');
+    const blob = item.getAsFile();
+    const ext =
+      {
+        'image/png': '.png',
+        'image/jpg': '.jpg',
+        'image/tiff': '.tiff',
+      }[item.type] || '';
+
+    const reader = new FileReader();
+    reader.addEventListener('loadend', () => {
+      const buffer = Buffer.from(new Uint8Array(reader.result as any));
+      const tmpFolder = temp.path('-mailspring-attachment');
+      const tmpPath = path.join(tmpFolder, `Pasted File${ext}`);
+      fs.mkdir(tmpFolder, () => {
+        fs.writeFile(tmpPath, buffer, () => {
+          onFileReceived(tmpPath);
+        });
+      });
+    });
+    reader.readAsArrayBuffer(blob);
+    return true;
+  }
+
+  const macCopiedFile = decodeURI(ElectronClipboard.read('public.file-url').replace('file://', ''));
+  const winCopiedFile = ElectronClipboard.read('FileNameW').replace(
+    new RegExp(String.fromCharCode(0), 'g'),
+    ''
+  );
+  if (macCopiedFile.length || winCopiedFile.length) {
+    onFileReceived(macCopiedFile || winCopiedFile);
+    return true;
+  }
+
+  return false;
 }
