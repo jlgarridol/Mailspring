@@ -1,5 +1,43 @@
 # Mailspring Changelog
 
+### 1.7.8 (5/24/2020)
+
+**Fixes:**
+
+- Resolves a critical SMTP connection problem on Linux for Office365, manually configured Gmail, and other accounts that used the LOGIN SMTP authentication mechanism. #1996, https://github.com/cyrusimap/cyrus-sasl/pull/613
+
+- Plain text messages using a multipart MIME structure with one or more attachments now render correctly as plaintext.
+
+- "Sync Mail Now" is displayed in Preferences > Shortcuts so it's easier to map it to a custom shortcut. #1941
+
+**Developer:**
+
+- Mailspring now uses CSS properties on `mailspring-workspace` to set the height of the thread list and other key components so themes can customize them! See #2004 for details and thanks to @sergeystoma for this improvement!
+
+### 1.7.7 (5/20/2020)
+
+**Fixes:**
+
+- Mailspring now ships with OpenSSL-1.1.0f on Windows and Linux, which resolves connection issues with Yahoo and other IMAP providers that recently began requiring newer SSL / TLS features. #1974
+
+- When testing IMAP auth, mailcore and libetpan debug logs are included in the "Detailed Log" output, which will make the above easier to track down in the future. #1974
+
+- On Windows, pasting CRLF delimited plain text does not result in newlines being lost. #1756
+
+- Mailspring no longer fails to connect to SMTP servers on older Linux distros (Ubuntu 14, etc.) that do not have `realpath` installed. #1974
+
+- Groups of more than 999 contacts no longer cause “sqlite too many variables” errors during contact sync. #1951
+
+- Google token expiration via password reset is handled properly and presents as an authentication error and not a connection error.
+
+- When replying to plain email using the rich editor, quoted plaintext is converted to HTML #1853
+
+**Developer:**
+
+- On Windows, we ship the mailsync pdb files so stack traces viewed in the sync logs have function names for easy reporting / triage.
+
+- Contact and calendar sync issues no longer halt email sync under any circumstances. We will continue to improve the quality of calendar sync, but want to ensure an uninterrutped email experience.
+
 ### 1.7.6 (4/21/2020)
 
 **Fixes:**

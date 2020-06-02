@@ -6,7 +6,7 @@ git:
 language: node_js
 
 node_js:
-  - "11"
+  - '11'
 
 addons:
   artifacts:
@@ -40,8 +40,8 @@ addons:
 branches:
   only:
     - master
-    - "/ci-.*/"
-    - "/stable.*/"
+    - '/ci-.*/'
+    - '/stable.*/'
 
 matrix:
   include:
@@ -81,7 +81,7 @@ cache:
   directories:
     - node_modules
     - app/node_modules
-    - /tmp/mailsync-build-deps
+    - /tmp/mailsync-build-deps-v2
     - /var/lib/docker/aufs
 
 after_success:
@@ -95,7 +95,7 @@ services:
   - docker
 
 deploy:
-  "on":
+  'on':
     branch: master
     condition: $TRAVIS_OS_NAME = linux
   provider: script
