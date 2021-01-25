@@ -75,14 +75,15 @@ class FeatureUsageStore extends MailspringStore {
   displayUpgradeModal(feature, lexicon) {
     //
     const featureData = this._dataForFeature(feature);
-    let { headerText, rechargeText, iconUrl } = lexicon;
+    const { iconUrl } = lexicon;
+    let { headerText, rechargeText } = lexicon;
 
     if (!featureData.quota) {
       headerText = localized(`Uhoh - that's a pro feature!`);
     } else {
       headerText = headerText || localized("You've reached your quota");
 
-      let time = featureData.period === 'monthly' ? localized('month') : localized('week');
+      const time = featureData.period === 'monthly' ? localized('month') : localized('week');
       rechargeText = rechargeText.replace('%1$@', featureData.quota).replace('%2$@', time);
     }
 

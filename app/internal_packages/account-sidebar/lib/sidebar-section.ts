@@ -106,7 +106,7 @@ class SidebarSection {
     ];
     const items = [];
 
-    for (var names of standardNames) {
+    for (let names of standardNames) {
       names = Array.isArray(names) ? names : [names];
       const categories = CategoryStore.getCategoriesWithRoles(accounts, ...names);
       if (categories.length === 0) {
@@ -177,7 +177,7 @@ class SidebarSection {
   }
 
   static forUserCategories(
-    account,
+    account: Account,
     { title, collapsible }: { title?: string; collapsible?: boolean } = {}
   ): ISidebarSection {
     let onCollapseToggled;
@@ -194,9 +194,9 @@ class SidebarSection {
     //
     const items = [];
     const seenItems = {};
-    for (let category of CategoryStore.userCategories(account)) {
+    for (const category of CategoryStore.userCategories(account)) {
       // https://regex101.com/r/jK8cC2/1
-      var item, parentKey;
+      let item, parentKey;
       const re = RegExpUtils.subcategorySplitRegex();
       const itemKey = category.displayName.replace(re, '/');
 
@@ -239,12 +239,14 @@ class SidebarSection {
     if (collapsible) {
       onCollapseToggled = toggleSectionCollapsed;
     }
+    const titleColor = account.color;
 
     return {
       title,
       iconName,
       items,
       collapsed,
+      titleColor,
       onCollapseToggled,
       onItemCreated(displayName) {
         if (!displayName) {
